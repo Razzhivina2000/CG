@@ -2,6 +2,7 @@
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 texCoords;
 
 out vec3 normal_in_view;
 out vec3 pos_in_view;
@@ -20,4 +21,5 @@ void main()
     pos_in_view = vec3(view * model * vec4(position, 1.0f));
     normal_in_view = mat3(transpose(inverse(view * model))) * normal;
     lightPos_in_view = vec3(view * vec4(lightPos, 1.0));
+    TexCoords = texCoords;
 } 

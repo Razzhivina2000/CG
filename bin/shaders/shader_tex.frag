@@ -3,6 +3,7 @@
 in vec3 normal_in_view;
 in vec3 pos_in_view;
 in vec3 lightPos_in_view;
+in vec2 TexCoords;
 
 out vec4 color;
   
@@ -10,18 +11,10 @@ uniform vec3 lightColor;
 uniform vec3 objectColor;
 uniform sampler2D Texture;
 
-uniform float constant;
-uniform float linear;
-uniform float quadratic;
-
-uniform float ambientStrength;
-uniform float specularStrength;
-uniform float shininess;
-
-
 void main()
 {
     // Ambient
+    float ambientStrength = 0.1f;
     vec3 ambient = ambientStrength * lightColor;
       
     // Diffuse
@@ -31,18 +24,13 @@ void main()
     vec3 diffuse = diff * lightColor;
     
     // Specular
+    float specularStrength = 0.5f;
+    float shininess = 32;
     vec3 view_pos = normalize(-pos_in_view);
     vec3 reflect_light_pos = reflect(-light_pos, norm);
     float spec = pow(max(dot(view_pos, reflect_light_pos), 0.0), shininess);
     vec3 specular = specularStrength * spec * lightColor;
-    
-    float dist = length(lightPos_in_view - pos_in_view);
-    float attenuation = 1.0 / (constant + linear * dist + quadratic * (dist * dist));
-
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;
         
     vec3 result = (ambient + diffuse + specular) * objectColor;
-    color = vec4(result, 1.0f);
+    color = texture(Texture, TexCoords) * vec4(result, 1.0f);
 } 
