@@ -1,60 +1,50 @@
 #version 330 core
 out vec4 color;
 
-in vec3 FragPos;
-in vec3 Normal;
+in vec3 pos_in_model;
+in vec3 norm_in_model;
   
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 objectColor;
 
-float CookTorrance(vec3 _normal, vec3 _light, vec3 _view, float roughness_val) {
-    if (roughness_val <= 0.0) return 0.0;
-    vec3  half_vec = normalize( _view + _light );
-    // найдем разнообразные скалярные произведения :)
-       float NdotL    = max( dot( _normal, _light ), 0.0 );
-       float NdotV    = max( dot( _normal, _view ), 0.0 );
-       float NdotH    = max( dot( _normal, half_vec ), 1.0e-7 );
-       float VdotH    = max( dot( _view,   half_vec ), 0.0 );
-    // NdotH не может быть равным нулю, так как в последствии на него надо будет делить
+float CookTorrance(vec3 normal, vec3 light, vec3 view, float m) {
+    if (m <= 0.0) return 0.0;
+    vec3  half_vec = normalize(view + light);
+    float N_L = max(dot(normal, light), 0.0);
+    float N_V = max(dot(normal, view), 0.0);
+    float N_H = max(dot(normal, half_vec), 0.0);
+    if(N_H == 0.0)
+        N_H = 1.0e-7;
+    
+    float V_H = max(dot(view, half_vec), 0.0);
+    if(V_H == 0.0)
+        V_H = 1.0e-7;
+    
+    float G = min(1.0, 2 * N_H * min(N_V, N_L) / V_H);
 
-    // вычислим геометрическую составляющую
-       float geometric = 2.0 * NdotH / VdotH;
-             geometric = min( 1.0, geometric * min(NdotV, NdotL) );
+    float tmp = (N_H * N_H - 1.0) / (N_H * N_H  * m * m);
+    float R = exp(tmp) / (4.0 * N_H * N_H * N_H * N_H * m * m);
+    
+    float F = 1.0 / (1.0 + N_V);
 
-    // вычислим компонент шероховатости поверхности
-       float r_sq          = roughness_val * roughness_val;
-       float NdotH_sq      = NdotH * NdotH;
-       float NdotH_sq_r    = 1.0 / (NdotH_sq * r_sq);
-       float roughness_exp = (NdotH_sq - 1.0) * ( NdotH_sq_r );
-       float roughness     = exp(roughness_exp) * NdotH_sq_r / (4.0 * NdotH_sq );
-    // может быть, эти вычисления в точности не соответствуют приведенным выше формулам
-    // но поверьте – это они и есть :)
-
-    // вычислим коэффициент Френеля, не вводя дополнительный параметр
-       float fresnel = 1.0 / (1.0 + NdotV);
-
-    // вычисляем результат, добавляя к знаменателю малую величину
-    // чтобы не было деления на ноль
-       return min(1.0, (fresnel * geometric * roughness) / (NdotV * NdotL + 1.0e-7));
+    return min(1.0, (F * G * R) / (N_V * N_L + 1.0e-7));
 }
 
 void main()
 {
-    // Ambient
+
     float ambientStrength = 0.1f;
     vec3 ambient = ambientStrength * vec3(1.0f);
       
-    // Diffuse
-    vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(lightPos - FragPos);
+    vec3 norm = normalize(norm_in_model);
+    vec3 lightDir = normalize(lightPos - pos_in_model);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = diff * vec3(1.0f);
     
-    // Specular
     float specularStrength = 0.5f;
     float roughness_val = 0.5f;
-    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 viewDir = normalize(viewPos - pos_in_model);
     float spec = CookTorrance(norm, lightDir, viewDir, roughness_val);
     vec3 specular = specularStrength * spec * diff * vec3(1.0f);
         
