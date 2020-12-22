@@ -41,7 +41,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     {
         blinn = !blinn;
     }
-    
+
     if (key == GLFW_KEY_N && action == GLFW_PRESS)
     {
         shpik = !shpik;
@@ -116,7 +116,7 @@ GLuint loadCubemap(std::vector<std::string> path)
             SOIL_free_image_data(img);
         }
     }
- 
+
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
     return textureID;
@@ -163,6 +163,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL", NULL, NULL);
 
@@ -254,8 +255,8 @@ int main()
         -10.0f, -0.5f, -20.0f,  0.0f, 1.0f, 0.0f,   0.0f, 20.0f,
          10.0f, -0.5f, -20.0f,  0.0f, 1.0f, 0.0f,  20.0f, 20.0f
     };
-    
-    float quadVertices1[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+    /*
+    float quadVertices[] = {
         // positions   // texCoords
         -1.0f,  1.0f,  0.0f, 1.0f,
         -1.0f, -1.0f,  0.0f, 0.0f,
@@ -265,7 +266,7 @@ int main()
          1.0f, -1.0f,  1.0f, 0.0f,
          1.0f,  1.0f,  1.0f, 1.0f
     };
-    
+    */
     float skyboxVertices[] = {
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
@@ -370,19 +371,17 @@ int main()
     glm::vec3 pos2(-1.0f, -1.0f, 0.0f);
     glm::vec3 pos3( 1.0f, -1.0f, 0.0f);
     glm::vec3 pos4( 1.0f,  1.0f, 0.0f);
-    // texture coordinates
+
     glm::vec2 uv1(0.0f, 1.0f);
     glm::vec2 uv2(0.0f, 0.0f);
     glm::vec2 uv3(1.0f, 0.0f);
     glm::vec2 uv4(1.0f, 1.0f);
-    // normal vector
+    
     glm::vec3 nm(0.0f, 0.0f, 1.0f);
 
-    // calculate tangent/bitangent vectors of both triangles
     glm::vec3 tangent1, bitangent1;
     glm::vec3 tangent2, bitangent2;
-    // triangle 1
-    // ----------
+
     glm::vec3 edge1 = pos2 - pos1;
     glm::vec3 edge2 = pos3 - pos1;
     glm::vec2 deltaUV1 = uv2 - uv1;
@@ -398,8 +397,6 @@ int main()
     bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
     bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
 
-    // triangle 2
-    // ----------
     edge1 = pos3 - pos1;
     edge2 = pos4 - pos1;
     deltaUV1 = uv3 - uv1;
@@ -417,7 +414,7 @@ int main()
     bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
 
 
-    float quadVertices[] = {
+    float normalVertices[] = {
         // positions            // normal         // texcoords  // tangent                          // bitangent
         pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
         pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
@@ -428,12 +425,12 @@ int main()
         pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
     };
 
-    GLuint quadVAO, quadVBO;
-    glGenVertexArrays(1, &quadVAO);
-    glGenBuffers(1, &quadVBO);
-    glBindVertexArray(quadVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+    GLuint normalVAO, normalVBO;
+    glGenVertexArrays(1, &normalVAO);
+    glGenBuffers(1, &normalVBO);
+    glBindVertexArray(normalVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, normalVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(normalVertices), &normalVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
@@ -446,33 +443,29 @@ int main()
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(11 * sizeof(float)));
     glBindVertexArray(0);
   
-    GLuint quadVAO1, quadVBO1;
-    glGenVertexArrays(1, &quadVAO1);
-    glGenBuffers(1, &quadVBO1);
-    glBindVertexArray(quadVAO1);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO1);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices1), quadVertices1, GL_STATIC_DRAW);
+    /*GLuint screenVAO, screenVBO;
+    glGenVertexArrays(1, &screenVAO);
+    glGenBuffers(1, &screenVBO);
+    glBindVertexArray(screenVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
-    
-    /*GLuint framebuffer;
+
+    GLuint framebuffer;
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     GLuint texColorBuffer;
     glGenTextures(1, &texColorBuffer);
-    //glBindTexture(GL_TEXTURE_2D, texColorBuffer);
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texColorBuffer);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGB, width, height, GL_TRUE);
+    glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
-
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
-
     GLuint rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -481,8 +474,8 @@ int main()
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
-    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+ */
     std::vector<std::string> faces
     {
         "skybox/Lycksele3/posx.jpg",
@@ -497,10 +490,11 @@ int main()
     GLuint texture = loadTexture("textures/Wood.jpg");
     GLuint texture2 = loadTexture("textures/Grass.jpg");
     GLuint texture3 = loadTexture("textures/texture.jpg");
-    GLuint normtexture = loadTexture("textures/toy_box_normal.png");
-    GLuint heighttexture = loadTexture("textures/toy_box_disp.png");
+    GLuint normtexture = loadTexture("textures/NormalMap.png");
+    GLuint heighttexture = loadTexture("textures/standard_height.png");
     
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);
     
     while(!glfwWindowShouldClose(window))
     {
@@ -567,8 +561,8 @@ int main()
             glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
         
             objectColorLoc = glGetUniformLocation(ourTexShader.Program, "objectColor");
-            lightColorLoc  = glGetUniformLocation(ourTexShader.Program, "lightColor");
-            lightPosLoc    = glGetUniformLocation(ourTexShader.Program, "lightPos");
+            lightColorLoc = glGetUniformLocation(ourTexShader.Program, "lightColor");
+            lightPosLoc = glGetUniformLocation(ourTexShader.Program, "lightPos");
         
             glUniform3f(objectColorLoc, 0.5f, 0.5f, 0.5f);
             glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
@@ -591,7 +585,6 @@ int main()
             glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
             viewLoc = glGetUniformLocation(normalShader.Program, "view");
             glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-            // render normal-mapped quadx
             model = glm::mat4(0.3f);
             model = glm::translate(model, glm::vec3(-2.0, 0.5, -1.5));
             model = glm::scale(model, glm::vec3(0.5f));
@@ -610,7 +603,7 @@ int main()
         glUniform1i(glGetUniformLocation(normalShader.Program, "normalMap"), 2);
         glActiveTexture(0);
         
-        glBindVertexArray(quadVAO);
+        glBindVertexArray(normalVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
         
@@ -620,7 +613,6 @@ int main()
             glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
             viewLoc = glGetUniformLocation(parallaxShader.Program, "view");
             glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-            // render normal-mapped quadx
             model = glm::mat4(0.3f);
             model = glm::translate(model, glm::vec3(-1.0, 0.5, -1.5));
             model = glm::scale(model, glm::vec3(0.5f));
@@ -644,7 +636,7 @@ int main()
         glUniform1i(glGetUniformLocation(parallaxShader.Program, "depthMap"), 5);
         glActiveTexture(0);
         
-        glBindVertexArray(quadVAO);
+        glBindVertexArray(normalVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
         
@@ -675,7 +667,7 @@ int main()
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
-         
+
          
         /*
         for(int i = 1; i < 4; ++i) {
@@ -690,7 +682,6 @@ int main()
                 modelLoc = glGetUniformLocation(ourShader.Program, "model");
                 viewLoc = glGetUniformLocation(ourShader.Program, "view");
                 projLoc = glGetUniformLocation(ourShader.Program, "projection");
-
                 glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
                 glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
                 glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
@@ -785,7 +776,7 @@ int main()
             screenShader.Use();
         }
         
-        glBindVertexArray(quadVAO1);
+        glBindVertexArray(screenVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texColorBuffer);
         glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -796,12 +787,12 @@ int main()
     }
 
     glDeleteVertexArrays(1, &VAO);
-    //glDeleteVertexArrays(1, &lightVAO);
-    glDeleteVertexArrays(1, &quadVAO);
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteVertexArrays(1, &lightVAO);
+    glDeleteVertexArrays(1, &normalVAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &quadVBO);
+   
     
     glfwTerminate();
     return 0;
 }
-
